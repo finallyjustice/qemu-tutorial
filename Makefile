@@ -1,11 +1,11 @@
-SRCFILE=qemu-usage.tex
-PDFFILE=qemu-usage.pdf
+SRCFILE=qemu-tutorial.tex
+PDFFILE=qemu-tutorial.pdf
 
 all: pdf
 
 pdf: ${SRCFILE}
-	pdflatex qemu-usage.tex
-	pdflatex qemu-usage.tex
+	pdflatex qemu-tutorial.tex
+	pdflatex qemu-tutorial.tex
 
 open: ${PDFFILE}
 	gnome-open ${PDFFILE}
