@@ -139,7 +139,7 @@ We directly use output w/o 'make install':
 
 \section{Boot QEMU and Guest Linux}
 \begin{frame}
-\frametitle{Build QEMU and Guest Linux}
+\frametitle{Boot QEMU and Guest Linux}
 \begin{itemize}
 \item No need to work with guest IP, but only \textbf{\textcolor{blue}{$<$host\_ip$>$:5022}}
 \item Connect to guest via \textbf{\textcolor{blue}{VNC}}
@@ -1173,7 +1173,7 @@ vm\# dmesg \newline
 \frametitle{CPU Hotplug 3/3}
 \footnotesize
 \begin{itemize}
-\item A block-mq cpu hotplug bug reproduced for QEMU: \textcolor{red}{https://patchwork.kernel.org/patch/10889307}
+\item A block-mq cpu hotplug bug reproduced by QEMU: \textcolor{red}{https://patchwork.kernel.org/patch/10889307}
 \item Inflight requests on software queue \textcolor{olive}{is spliced to the incorrect hardware queue} during cpu offline
 \end{itemize}
 \begin{figure}
