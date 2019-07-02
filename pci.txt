@@ -1,0 +1,197 @@
+sudo ./x86_64-softmmu/qemu-system-x86_64 -vnc :0 -smp 4 -m 2000M -machine pc,accel=kvm -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1804.qcow2 \
+-device pci-bridge,id=bridge0,chassis_nr=1 \
+    -device e1000,bus=bridge0,addr=0x3 \
+-device pci-bridge,id=bridge1,chassis_nr=2 \
+    -device e1000,bus=bridge1,addr=0x3 \
+    -device e1000,bus=bridge1,addr=0x4
+qemu-system-x86_64: warning: nic e1000.1 has no peer
+qemu-system-x86_64: warning: nic e1000.2 has no peer
+qemu-system-x86_64: warning: nic e1000.3 has no peer
+
+00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)
+00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]
+00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]
+00:01.3 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 03)
+00:02.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+00:04.0 PCI bridge: Red Hat, Inc. QEMU PCI-PCI bridge
+00:05.0 PCI bridge: Red Hat, Inc. QEMU PCI-PCI bridge
+01:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+02:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+02:04.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+
+lspci -t
+-[0000:00]-+-00.0
+           +-01.0
+           +-01.1
+           +-01.3
+           +-02.0
+           +-03.0
+           +-04.0-[01]----03.0
+           \-05.0-[02]--+-03.0
+                        \-04.0
+
+---------------------------------------------------------
+
+sudo ./x86_64-softmmu/qemu-system-x86_64 -vnc :0 -smp 4 -m 2000M -machine pc,accel=kvm -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1804.qcow2 \
+-device pxb,id=bridge1,bus=pci.0,bus_nr=3 \
+    -device e1000,bus=bridge1,addr=0x3 \
+-device pxb,id=bridge2,bus=pci.0,bus_nr=8 \
+    -device e1000,bus=bridge2,addr=0x3 \
+    -device e1000,bus=bridge2,addr=0x4
+qemu-system-x86_64: warning: nic e1000.1 has no peer
+qemu-system-x86_64: warning: nic e1000.2 has no peer
+qemu-system-x86_64: warning: nic e1000.3 has no peer
+
+00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)
+00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]
+00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]
+00:01.3 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 03)
+00:02.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+00:04.0 Host bridge: Red Hat, Inc. QEMU PCI Expander bridge
+00:05.0 Host bridge: Red Hat, Inc. QEMU PCI Expander bridge
+03:00.0 PCI bridge: Red Hat, Inc. QEMU PCI-PCI bridge
+04:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+08:00.0 PCI bridge: Red Hat, Inc. QEMU PCI-PCI bridge
+09:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+09:04.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+
+# lspci -t
+-+-[0000:08]---00.0-[09]--+-03.0
+ |                        \-04.0
+ +-[0000:03]---00.0-[04]----03.0
+ \-[0000:00]-+-00.0
+             +-01.0
+             +-01.1
+             +-01.3
+             +-02.0
+             +-03.0
+             +-04.0
+             \-05.0
+
+PXB is a "light-weight" host bridge in the same PCI domain
+as the main host bridge whose purpose is to enable
+the main host bridge to support multiple PCI root buses.
+It is implemented only for i440fx and can be placed only
+on bus 0 (pci.0).
+
+As opposed to PCI-2-PCI bridge's secondary bus, PXB's bus
+is a primary bus and can be associated with a NUMA node
+(different from the main host bridge) allowing the guest OS
+to recognize the proximity of a pass-through device to
+other resources as RAM and CPUs.
+
+---------------------------------------------------------
+
+sudo ./x86_64-softmmu/qemu-system-x86_64 -vnc :0 -smp 4 -m 2000M -machine q35,accel=kvm -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1804.qcow2
+-device pxb-pcie,id=pcie.1,bus_nr=2,bus=pcie.0
+    -device ioh3420,id=pcie_pci_bridge1,bus=pcie.1,chassis=1
+        -device e1000e,bus=pcie_pci_bridge1
+    -device ioh3420,id=pcie_pci_bridge2,bus=pcie.1,chassis=2
+        -device e1000e,bus=pcie_pci_bridge2
+-device pxb-pcie,id=pcie.2,bus_nr=8,bus=pcie.0
+    -device ioh3420,id=pcie_pci_bridge3,bus=pcie.2,chassis=3
+        -device e1000e,bus=pcie_pci_bridge3
+qemu-system-x86_64: warning: nic e1000e.1 has no peer
+qemu-system-x86_64: warning: nic e1000e.2 has no peer
+qemu-system-x86_64: warning: nic e1000e.3 has no peer
+
+00:00.0 Host bridge: Intel Corporation 82G33/G31/P35/P31 Express DRAM Controller
+00:01.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:02.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+00:03.0 Host bridge: Red Hat, Inc. QEMU PCIe Expander bridge
+00:04.0 Host bridge: Red Hat, Inc. QEMU PCIe Expander bridge
+00:1f.0 ISA bridge: Intel Corporation 82801IB (ICH9) LPC Interface Controller (rev 02)
+00:1f.2 SATA controller: Intel Corporation 82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode] (rev 02)
+00:1f.3 SMBus: Intel Corporation 82801I (ICH9 Family) SMBus Controller (rev 02)
+02:00.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+02:01.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+03:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+04:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+08:00.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+09:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+
+lspci -t
+-+-[0000:08]---00.0-[09]----00.0
+ +-[0000:02]-+-00.0-[03]----00.0
+ |           \-01.0-[04]----00.0
+ \-[0000:00]-+-00.0
+             +-01.0
+             +-02.0
+             +-03.0
+             +-04.0
+             +-1f.0
+             +-1f.2
+             \-1f.3
+
+pxb-pcie is for Extra Root Complexes to create multiple PCI Express Root Buses
+ioh3420 is for PCI Express Root Ports to starting exclusively PCI Express hierarchies.
+
+---------------------------------------------------------
+
+sudo ./x86_64-softmmu/qemu-system-x86_64 -vnc :0 -smp 4 -m 2000M -machine q35,accel=kvm -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1804.qcow2
+-device pcie-root-port,id=root1,slot=0
+    -device e1000e,bus=root1 
+-device pcie-root-port,id=root2,slot=1
+    -device e1000e,bus=root2
+qemu-system-x86_64: warning: nic e1000e.1 has no peer
+qemu-system-x86_64: warning: nic e1000e.2 has no peer
+
+00:00.0 Host bridge: Intel Corporation 82G33/G31/P35/P31 Express DRAM Controller
+00:01.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:02.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+00:03.0 PCI bridge: Red Hat, Inc. QEMU PCIe Root port
+00:04.0 PCI bridge: Red Hat, Inc. QEMU PCIe Root port
+00:1f.0 ISA bridge: Intel Corporation 82801IB (ICH9) LPC Interface Controller (rev 02)
+00:1f.2 SATA controller: Intel Corporation 82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode] (rev 02)
+00:1f.3 SMBus: Intel Corporation 82801I (ICH9 Family) SMBus Controller (rev 02)
+01:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+02:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+
+# lspci -t
+-[0000:00]-+-00.0
+           +-01.0
+           +-02.0
+           +-03.0-[01]----00.0
+           +-04.0-[02]----00.0
+           +-1f.0
+           +-1f.2
+           \-1f.3
+
+---------------------------------------------------------
+
+sudo ./x86_64-softmmu/qemu-system-x86_64 -vnc :0 -smp 4 -m 2000M -machine q35,accel=kvm -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1804.qcow2 \
+-device ioh3420,id=root_port1,bus=pcie.0
+    -device x3130-upstream,id=upstream_port1,bus=root_port1
+        -device xio3130-downstream,id=downstream_port1,bus=upstream_port1,chassis=9
+            -device e1000e,bus=downstream_port1
+        -device xio3130-downstream,id=downstream_port2,bus=upstream_port1,chassis=10
+            -device e1000e,bus=downstream_port2
+qemu-system-x86_64: warning: nic e1000.0 has no peer
+qemu-system-x86_64: warning: nic e1000.1 has no peer
+
+00:00.0 Host bridge: Intel Corporation 82G33/G31/P35/P31 Express DRAM Controller
+00:01.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:02.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+00:03.0 PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 (rev 02)
+00:1f.0 ISA bridge: Intel Corporation 82801IB (ICH9) LPC Interface Controller (rev 02)
+00:1f.2 SATA controller: Intel Corporation 82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode] (rev 02)
+00:1f.3 SMBus: Intel Corporation 82801I (ICH9 Family) SMBus Controller (rev 02)
+01:00.0 PCI bridge: Texas Instruments XIO3130 PCI Express Switch (Upstream) (rev 02)
+02:00.0 PCI bridge: Texas Instruments XIO3130 PCI Express Switch (Downstream) (rev 01)
+02:01.0 PCI bridge: Texas Instruments XIO3130 PCI Express Switch (Downstream) (rev 01)
+03:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+04:00.0 Ethernet controller: Intel Corporation 82574L Gigabit Network Connection
+
+lspci -t
+-[0000:00]-+-00.0
+           +-01.0
+           +-02.0
+           +-03.0-[01-04]----00.0-[02-04]--+-00.0-[03]----00.0
+           |                               \-01.0-[04]----00.0
+           +-1f.0
+           +-1f.2
+           \-1f.3
+
+PCI Express Switches (x3130-upstream, xio3130-downstream)
