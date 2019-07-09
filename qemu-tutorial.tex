@@ -785,10 +785,10 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 \section{PCI Root Bus 1/3}
 \begin{frame}
 \frametitle{PCI Root Bus 1/3}
-{\LARGE Create 2 PCI Expander Bridge (PXB)'s primary bus}
+{\Large Create 2 PCI Expander Bridge (PXB)'s root bus (\textcolor{red}{exposed through ACPI})}
 \begin{itemize}
-\item The 1st primary bus is with 1 E1000 NIC
-\item The 2nd primary bus is with 2 E1000 NIC
+\item The 1st PCI root bus is with 1 E1000 NIC
+\item The 2nd PCI root bus is with 2 E1000 NIC
 \end{itemize}
 \begin{block}{}
 
@@ -852,7 +852,7 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 \section{PCI Express Root Complex 1/3}
 \begin{frame}
 \frametitle{PCI Express Root Complex 1/3}
-{\LARGE Create 2 extra PCI Express Root Complex}
+{\Large Create 2 extra PCI Express Root Complex (\textcolor{red}{exposed through ACPI})}
 \begin{itemize}
 \item The 1st PCI Express Root Complex is with 2 E1000 NIC
 \item The 2nd PCI Express Root Complex is with 1 E1000 NIC
