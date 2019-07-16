@@ -1102,6 +1102,114 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 
 %------------------------------------------------
 
+\section{NUMA \& PCI 1/2}
+\begin{frame}
+\frametitle{NUMA \& PCI 1/2}
+{\large Attach PCI Expander Bridge (PXB)'s root bus (with NVMe) to \textcolor{red}{NUMA node 1}}
+\begin{block}{}
+
+\# qemu-system-x86\_64 -machine \textbf{\textcolor{blue}{pc}},accel=kvm -vnc :0 \textbackslash
+
+-net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
+
+-kernel /home/user/linux/arch/x86\_64/boot/bzImage \textbackslash
+	
+-append "root=/dev/sda1 init=/sbin/init text" \textbackslash
+
+-hda /home/user/img/boot.qcow2 \textbackslash
+
+\textcolor{red}{-smp 4,sockets=2,cores=2,threads=1 -m 2304M} \textbackslash
+
+\textcolor{red}{-numa node,mem=2048,cpus=0-1} \textbackslash
+
+\textcolor{red}{-numa node,mem=256,cpus=2-3} \textbackslash
+
+\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{pxb}},id=bridge1,bus=pci.0,bus\_nr=3,\textbf{\textcolor{blue}{numa\_node=1}}} \textbackslash
+
+\textcolor{olive}{\ \ \ \ \ \ \ \ -device \textbf{\textcolor{blue}{nvme}},drive=nvme0,serial=deadbeaf1,num\_queues=8,\textbf{\textcolor{blue}{bus=bridge1,addr=0x3}}} \textbackslash
+
+\textcolor{olive}{\ \ \ \ \ \ \ \ \ \ \ \ -drive file=/home/user/img/disk.qcow2,if=none,id=nvme0}
+
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{NUMA \& PCI 2/2}
+\begin{frame}
+\frametitle{NUMA \& PCI 2/2}
+\begin{figure}
+\includegraphics[width=1.0\linewidth]{figures/numa-pci.pdf}
+\end{figure}
+\begin{block}{}
+\# lspci \\
+\textbf{\textcolor{blue}{03:00.0}} PCI bridge: Red Hat, Inc. QEMU PCI-PCI bridge \\
+\textbf{\textcolor{blue}{04:03.0}} Non-Volatile memory controller: Intel Corporation QEMU NVM Express Controller \newline
+
+\# cat \textcolor{red}{/sys/bus/pci/devices/0000$\backslash$:03$\backslash$:00.0/\textbf{\textcolor{blue}{numa\_node}}} \\
+\textbf{\textcolor{blue}{1}} \\
+\# cat \textcolor{red}{/sys/bus/pci/devices/0000$\backslash$:04$\backslash$:03.0/\textbf{\textcolor{blue}{numa\_node}}} \\
+\textbf{\textcolor{blue}{1}}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{NUMA \& PCI Express 1/2}
+\begin{frame}
+\frametitle{NUMA \& PCI Express 1/2}
+{\large Attach PCI Express Root Complex (with NVMe) to \textcolor{red}{NUMA node 1}}
+\begin{block}{}
+
+\# qemu-system-x86\_64 -machine \textbf{\textcolor{blue}{q35}},accel=kvm -vnc :0 \textbackslash
+
+-net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
+
+-kernel /home/user/linux/arch/x86\_64/boot/bzImage \textbackslash
+	
+-append "root=/dev/sda1 init=/sbin/init text" \textbackslash
+
+-hda /home/user/img/boot.qcow2 \textbackslash
+
+\textcolor{red}{-smp 4,sockets=2,cores=2,threads=1 -m 2304M} \textbackslash
+
+\textcolor{red}{-numa node,mem=2048,cpus=0-1} \textbackslash
+
+\textcolor{red}{-numa node,mem=256,cpus=2-3} \textbackslash
+
+\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{pxb-pcie}},id=pcie.1,bus\_nr=2,bus=pcie.0,\textbf{\textcolor{blue}{numa\_node=1}}} \textbackslash
+
+\textcolor{red}{\ \ \ \ \ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_bridge1,bus=pcie.1,chassis=1} \textbackslash
+
+\textcolor{olive}{\ \ \ \ \ \ \ \ \ \ \ \ -device \textbf{\textcolor{blue}{nvme}},drive=nvme0,serial=deadbeaf1,num\_queues=8,\textbf{\textcolor{blue}{bus=pcie\_bridge1}}} \textbackslash
+
+\textcolor{olive}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -drive file=/home/user/img/disk.qcow2,if=none,id=nvme0}
+
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{NUMA NUMA \& PCI Express 2/2}
+\begin{frame}
+\frametitle{NUMA \& PCI Express 2/2}
+\begin{figure}
+\includegraphics[width=1.0\linewidth]{figures/numa-pcie.pdf}
+\end{figure}
+\begin{block}{}
+\# lspci \\
+\textbf{\textcolor{blue}{02:00.0}} PCI bridge: Intel Corporation 7500/5520/5500/X58 I/O Hub PCI Express Root Port 0 \\
+\textbf{\textcolor{blue}{03:00.0}} Non-Volatile memory controller: Intel Corporation QEMU NVM Express Controller \newline
+
+\# cat \textcolor{red}{/sys/bus/pci/devices/0000$\backslash$:02$\backslash$:00.0/\textbf{\textcolor{blue}{numa\_node}}} \\
+\textbf{\textcolor{blue}{1}} \\
+\# cat \textcolor{red}{/sys/bus/pci/devices/0000$\backslash$:03$\backslash$:00.0/\textbf{\textcolor{blue}{numa\_node}}} \\
+\textbf{\textcolor{blue}{1}}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
 \section{CPU Hotplug 1/3}
 \begin{frame}
 \frametitle{CPU Hotplug 1/3}
@@ -1357,7 +1465,8 @@ MemTotal:\ \ \ \ \ \ \ \ \textcolor{red}{3020956 kB}
 \item Ethernet Card (e1000e, e1000, e100, 8139cp, vmxnet3)
 \item PCI Bus, PCIe Root Complex and PCIe Switch
 \item BIOS (seabios), IOMMU (intel), PM Suspend
-\item NUMA, Memory Hotplug, CPU Hotplug
+\item NUMA (CPU, Memory and PCI/PCIe)
+\item CPU Hotplug and Memory Hotplug
 \end{itemize}
 \end{frame}
 
