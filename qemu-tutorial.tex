@@ -871,19 +871,19 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 
 \textcolor{red}{-device \textbf{\textcolor{blue}{pxb-pcie}},id=pcie.1,bus\_nr=2,bus=pcie.0} \textbackslash
 
-\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_pci\_bridge1,bus=pcie.1,chassis=1} \textbackslash
+\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_bridge1,bus=pcie.1,chassis=1} \textbackslash
 
-\textcolor{olive}{\ \ \ \ \ \ \ \ -device e1000e,bus=pcie\_pci\_bridge1} \textbackslash
+\textcolor{olive}{\ \ \ \ \ \ \ \ -device e1000e,bus=pcie\_bridge1} \textbackslash
 
-\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_pci\_bridge2,bus=pcie.1,chassis=2} \textbackslash
+\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_bridge2,bus=pcie.1,chassis=2} \textbackslash
 
-\textcolor{olive}{\ \ \ \ \ \ \ \ -device e1000e,bus=pcie\_pci\_bridge2} \textbackslash
+\textcolor{olive}{\ \ \ \ \ \ \ \ -device e1000e,bus=pcie\_bridge2} \textbackslash
 
 \textcolor{red}{-device \textbf{\textcolor{blue}{pxb-pcie}},id=pcie.2,bus\_nr=8,bus=pcie.0} \textbackslash
 
-\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_pci\_bridge3,bus=pcie.2,chassis=3} \textbackslash
+\textcolor{red}{\ \ \ \ -device \textbf{\textcolor{blue}{ioh3420}},id=pcie\_bridge3,bus=pcie.2,chassis=3} \textbackslash
 
-\textcolor{olive}{\ \ \ \ \ \ \ \ -device e1000e,bus=pcie\_pci\_bridge3}
+\textcolor{olive}{\ \ \ \ \ \ \ \ -device e1000e,bus=pcie\_bridge3}
 
 \end{block}
 \end{frame}
