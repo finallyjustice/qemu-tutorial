@@ -1350,6 +1350,168 @@ MemTotal:\ \ \ \ \ \ \ \ \textcolor{red}{3020956 kB}
 
 %------------------------------------------------
 
+\section{PCI Hotplug 1/2}
+\begin{frame}
+\frametitle{PCI Hotplug 1/2}
+To hotplug PCI device (virtio-scsi as example)
+\begin{block}{}
+\small
+\# qemu-system-x86\_64 -machine \textbf{\textcolor{blue}{pc}},accel=kvm -vnc :0 -smp 4 -m 4096M \textbackslash
+
+-net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
+
+-kernel /home/user/linux/arch/x86\_64/boot/bzImage \textbackslash
+	
+-append "root=/dev/sda1 init=/sbin/init text" \textbackslash
+
+-hda /home/user/img/boot.qcow2 \textbackslash
+
+-monitor stdio
+
+(qemu)
+\end{block}
+\begin{block}{}
+\textcolor{red}{(qemu) \textbf{drive\_add} 0 file=/home/user/img/boot.qcow2,if=none,id=drive0}
+
+\textcolor{red}{(qemu) \textbf{device\_add} virtio-scsi-pci,id=scsi0,num\_queues=4}
+
+\textcolor{red}{(qemu) \textbf{device\_add} scsi-hd,drive=drive0,bus=scsi0.0,channel=0,scsi-id=0,lun=0} \newline
+
+\textcolor{blue}{vm\# echo 1 $>$ /sys/devices/pci0000$\backslash$:00/0000$\backslash$:00$\backslash$:04.0/remove}
+
+\textcolor{blue}{(qemu) \textbf{device\_del} scsi0}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{PCI Hotplug 2/2}
+\begin{frame}
+\frametitle{PCI Hotplug 2/2}
+\begin{block}{}
+\scriptsize
+\textcolor{red}{[  112.453286] pci 0000:00:04.0: [1af4:1004] type 00 class 0x010000}
+
+\textcolor{red}{[  112.453738] pci 0000:00:04.0: reg 0x10: [io  0x0000-0x003f]}
+
+\textcolor{red}{[  112.453830] pci 0000:00:04.0: reg 0x14: [mem 0x00000000-0x00000fff]}
+
+\textcolor{red}{[  112.454164] pci 0000:00:04.0: reg 0x20: [mem 0x00000000-0x00003fff 64bit pref]}
+
+\textcolor{red}{[  112.456040] pci 0000:00:04.0: BAR 4: assigned [mem 0x100000000-0x100003fff 64bit pref]}
+
+\textcolor{red}{[  112.456165] pci 0000:00:04.0: BAR 1: assigned [mem 0x7d000000-0x7d000fff]}
+
+\textcolor{red}{[  112.456204] pci 0000:00:04.0: BAR 0: assigned [io  0x1000-0x103f]}
+
+\textcolor{red}{[  112.456298] virtio-pci 0000:00:04.0: enabling device (0000 -$>$ 0003)}
+
+\textcolor{red}{[  112.476570] PCI Interrupt Link [LNKD] enabled at IRQ 10}
+
+\textbf{\textcolor{red}{[  112.479743] scsi host2: Virtio SCSI HBA}}
+
+\textcolor{red}{[  145.395174] scsi 2:0:0:0: Direct-Access     QEMU     QEMU HARDDISK    2.5+ PQ: 0 ANSI: 5}
+
+\textcolor{red}{[  145.395801] sd 2:0:0:0: Attached scsi generic sg2 type 0}
+
+\textcolor{red}{[  145.395894] sd 2:0:0:0: Power-on or device reset occurred}
+
+\textcolor{red}{[  145.397397] sd 2:0:0:0: [sdb] 12288000 512-byte logical blocks: (6.29 GB/5.86 GiB)}
+
+\textcolor{red}{[  145.397450] sd 2:0:0:0: [sdb] Write Protect is off}
+
+\textcolor{red}{[  145.397452] sd 2:0:0:0: [sdb] Mode Sense: 63 00 00 08}
+
+\textcolor{red}{[  145.397684] sd 2:0:0:0: [sdb] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA}
+
+\textcolor{red}{[  145.407203] sd 2:0:0:0: [sdb] Attached SCSI disk} \newline
+
+\textcolor{blue}{[  376.104587] sd 2:0:0:0: [sdb] Synchronizing SCSI cache}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{PCI Express Hotplug 1/2}
+\begin{frame}
+\frametitle{PCI Express Hotplug 1/2}
+{\Large Bus 'pcie.0' does not support hotplugging}
+\begin{block}{}
+\small
+\# qemu-system-x86\_64 -machine \textbf{\textcolor{blue}{q35}},accel=kvm -vnc :0 -smp 4 -m 4096M \textbackslash
+
+-net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
+
+-kernel /home/user/linux/arch/x86\_64/boot/bzImage \textbackslash
+	
+-append "root=/dev/sda1 init=/sbin/init text" \textbackslash
+
+-hda /home/user/img/boot.qcow2 \textbackslash
+
+\textcolor{red}{-device \textbf{\textcolor{blue}{pcie-root-port}},id=root,slot=0} \textbackslash
+
+-monitor stdio
+
+(qemu)
+\end{block}
+\begin{block}{}
+\textcolor{red}{(qemu) \textbf{drive\_add} 0 file=/home/user/img/disk.qcow2,if=none,id=drive0}
+
+\textcolor{red}{(qemu) \textbf{device\_add} nvme,id=nvme0,drive=drive0,serial=deadbeaf1,num\_queues=8,\textbf{bus=root}} \newline
+
+\textcolor{blue}{vm\# echo 1 $>$ /sys/bus/pci/devices/0000$\backslash$:01$\backslash$:00.0/remove}
+
+\textcolor{blue}{(qemu) \textbf{device\_del} nvme0}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{PCI Express Hotplug 2/2}
+\begin{frame}
+\frametitle{PCI Express Hotplug 2/2}
+\begin{block}{}
+\scriptsize
+\textcolor{red}{[ 1082.586368] pcieport 0000:00:03.0: pciehp: Slot(0): Attention button pressed}
+
+\textcolor{red}{[ 1082.586423] pcieport 0000:00:03.0: pciehp: Slot(0) Powering on due to button press}
+
+\textcolor{red}{[ 1082.586738] pcieport 0000:00:03.0: pciehp: Slot(0): Card present}
+
+\textcolor{red}{[ 1082.586739] pcieport 0000:00:03.0: pciehp: Slot(0): Link Up}
+
+\textcolor{red}{[ 1082.713712] pci 0000:01:00.0: [8086:5845] type 00 class 0x010802}
+
+\textcolor{red}{[ 1082.714082] pci 0000:01:00.0: reg 0x10: [mem 0x00000000-0x00001fff 64bit]}
+
+\textcolor{red}{[ 1082.714429] pci 0000:01:00.0: reg 0x20: [mem 0x00000000-0x00000fff]}
+
+\textcolor{red}{[ 1082.716498] pci 0000:01:00.0: BAR 0: assigned [mem 0xfe800000-0xfe801fff 64bit]}
+
+\textcolor{red}{[ 1082.716627] pci 0000:01:00.0: BAR 4: assigned [mem 0xfe802000-0xfe802fff]}
+
+\textcolor{red}{[ 1082.716667] pcieport 0000:00:03.0: PCI bridge to [bus 01]}
+
+\textcolor{red}{[ 1082.716694] pcieport 0000:00:03.0:   bridge window [io  0x1000-0x1fff]}
+
+\textcolor{red}{[ 1082.718337] pcieport 0000:00:03.0:   bridge window [mem 0xfe800000-0xfe9fffff]}
+
+\textcolor{red}{[ 1082.719422] pcieport 0000:00:03.0:   bridge window [mem 0xfe000000-0xfe1fffff 64bit pref]}
+
+\textbf{\textcolor{red}{[ 1082.722132] nvme nvme0: pci function 0000:01:00.0}}
+
+\textbf{\textcolor{red}{[ 1082.722582] nvme 0000:01:00.0: enabling device (0000 -$>$ 0002)}}
+
+\textbf{\textcolor{red}{[ 1082.728457] nvme nvme0: 4/0/0 default/read/poll queues}} \newline
+
+\textcolor{blue}{[ 1112.858267] pcieport 0000:00:03.0: pciehp: Slot(0): Attention button pressed}
+
+\textcolor{blue}{[ 1112.858271] pcieport 0000:00:03.0: pciehp: Slot(0): Powering off due to button press}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
 \section{PM Suspend 1/3}
 \begin{frame}
 \frametitle{PM Suspend 1/3}
@@ -1464,9 +1626,9 @@ MemTotal:\ \ \ \ \ \ \ \ \textcolor{red}{3020956 kB}
 \item Virtio Block and Virtio Net
 \item Ethernet Card (e1000e, e1000, e100, 8139cp, vmxnet3)
 \item PCI Bus, PCIe Root Complex and PCIe Switch
-\item BIOS (seabios), IOMMU (intel), PM Suspend
 \item NUMA (CPU, Memory and PCI/PCIe)
-\item CPU Hotplug and Memory Hotplug
+\item Hotplug (CPU, Memory and PCI/PCIe)
+\item BIOS (seabios), IOMMU (intel), PM Suspend
 \end{itemize}
 \end{frame}
 
