@@ -1,0 +1,102 @@
+enable vt-d in bios
+enable INTEL_IOMMU in config
+set 'intel_iommu=on' in grub to enable iommu
+
+sudo modprobe vfio
+sudo modprobe vfio-pci
+
+
+dmesg | grep -e DMAR -e IOMMU | grep IOMMU
+[    0.000000] DMAR: IOMMU enabled
+[    0.037343] DMAR-IR: IOAPIC id 2 under DRHD base  0xfed91000 IOMMU 1
+
+
+lspci
+00:00.0 Host bridge: Intel Corporation Device 591f (rev 05)
+00:02.0 VGA compatible controller: Intel Corporation Device 5912 (rev 04)
+00:14.0 USB controller: Intel Corporation Device a2af
+00:14.2 Signal processing controller: Intel Corporation Device a2b1
+00:16.0 Communication controller: Intel Corporation Device a2ba
+00:17.0 SATA controller: Intel Corporation Device a282
+00:1b.0 PCI bridge: Intel Corporation Device a2e7 (rev f0)
+00:1d.0 PCI bridge: Intel Corporation Device a298 (rev f0)
+00:1f.0 ISA bridge: Intel Corporation Device a2c6
+00:1f.2 Memory controller: Intel Corporation Device a2a1
+00:1f.3 Audio device: Intel Corporation Device a2f0
+00:1f.4 SMBus: Intel Corporation Device a2a3
+00:1f.6 Ethernet controller: Intel Corporation Ethernet Connection (5) I219-V
+01:00.0 Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03)
+02:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection (rev 01)
+02:00.1 Ethernet controller: Intel Corporation I350 Gigabit Network Connection (rev 01)
+
+
+echo 0000:01:00.0 > /sys/bus/pci/devices/0000\:01\:00.0/driver/unbind
+
+lspci -ns 0000:01:00.0
+01:00.0 0108: 8086:f1a6 (rev 03)
+
+echo "8086 f1a6" > /sys/bus/pci/drivers/vfio-pci/new_id
+
+https://patchwork.kernel.org/patch/10707761/
+
+qemu-system-x86_64: -device vfio-pci,host=0000:01:00.0: vfio 0000:01:00.0: failed to add PCI capability 0x11[0x50]@0xb0: table & pba overlap, or they don't fit in BARs, or don't align
+
+sudo ./x86_64-softmmu/qemu-system-x86_64 -machine accel=kvm -vnc :0 -serial stdio -smp 4 -m 4096M -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1604/disk.qcow2 -device vfio-pci,host=0000:01:00.0
+
+
+lspci
+00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)
+00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]
+00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]
+00:01.3 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 03)
+00:02.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+00:04.0 Non-Volatile memory controller: Intel Corporation SSD Pro 7600p/760p/E 6100p Series (rev 03)
+
+------------------------------------------------------------
+
+echo 2 > /sys/module/igb/drivers/pci\:igb/0000\:02\:00.0/sriov_numvfs
+
+
+lspci
+00:00.0 Host bridge: Intel Corporation Device 591f (rev 05)
+00:02.0 VGA compatible controller: Intel Corporation Device 5912 (rev 04)
+00:14.0 USB controller: Intel Corporation Device a2af
+00:14.2 Signal processing controller: Intel Corporation Device a2b1
+00:16.0 Communication controller: Intel Corporation Device a2ba
+00:17.0 SATA controller: Intel Corporation Device a282
+00:1b.0 PCI bridge: Intel Corporation Device a2e7 (rev f0)
+00:1d.0 PCI bridge: Intel Corporation Device a298 (rev f0)
+00:1f.0 ISA bridge: Intel Corporation Device a2c6
+00:1f.2 Memory controller: Intel Corporation Device a2a1
+00:1f.3 Audio device: Intel Corporation Device a2f0
+00:1f.4 SMBus: Intel Corporation Device a2a3
+00:1f.6 Ethernet controller: Intel Corporation Ethernet Connection (5) I219-V
+01:00.0 Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03)
+02:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection (rev 01)
+02:00.1 Ethernet controller: Intel Corporation I350 Gigabit Network Connection (rev 01)
+02:10.0 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)
+02:10.4 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)
+
+
+echo 0000:02:10.0 > /sys/bus/pci/devices/0000\:02\:10.0/driver/unbind
+
+lspci -ns 0000:02:10.0
+02:10.0 0200: 8086:1520 (rev 01)
+
+echo "8086 1520" > /sys/bus/pci/drivers/vfio-pci/new_id
+
+sudo ./x86_64-softmmu/qemu-system-x86_64 -machine accel=kvm -vnc :0 -serial stdio -smp 4 -m 4096M -net nic -net user,hostfwd=tcp::5022-:22 -kernel /home/zhang/kvm/mainline-linux/arch/x86_64/boot/bzImage -append "root=/dev/sda1 init=/sbin/init text" -hda /home/zhang/img/ubuntu1604/disk.qcow2 -device vfio-pci,host=0000:02:10.0
+
+
+pci
+00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)
+00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]
+00:01.1 IDE interface: Intel Corporation 82371SB PIIX3 IDE [Natoma/Triton II]
+00:01.3 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 03)
+00:02.0 VGA compatible controller: Device 1234:1111 (rev 02)
+00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 03)
+00:04.0 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)
+
+
+

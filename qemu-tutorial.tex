@@ -717,6 +717,33 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 
 %------------------------------------------------
 
+\section{VFIO \& NVMe}
+\begin{frame}
+\frametitle{VFIO \& NVMe}
+\begin{block}{}
+we will pass below.... \newline
+01:00.0 Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03) \newline
+
+host\# echo 0000:01:00.0 $>$ /sys/bus/pci/devices/0000$\backslash$:01$\backslash$:00.0/driver/unbind \newline
+host\# lspci -ns 0000:01:00.0 \newline
+01:00.0 0108: 8086:f1a6 (rev 03) \newline
+host\# echo "8086 f1a6" $>$ /sys/bus/pci/drivers/vfio-pci/new\_id
+\end{block}
+\begin{block}{}
+\# qemu-system-x86\_64 -machine accel=kvm -vnc :0 -serial stdio -smp 4 -m 4096M \textbackslash
+
+-net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
+
+-kernel /home/user/linux/arch/x86\_64/boot/bzImage \textbackslash
+	
+-append "root=/dev/sda1 init=/sbin/init text" \textbackslash
+
+-hda /home/user/img/boot.qcow2
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
 \section{PCI Bridge 1/3}
 \begin{frame}
 \frametitle{PCI Bridge 1/3}
