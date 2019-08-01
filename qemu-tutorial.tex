@@ -739,7 +739,7 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 \textit{Steps to passthrough device to QEMU/KVM VM:}
 \begin{enumerate}
 \item Create \textcolor{red}{VF} (Virtual Function) device (\textbf{\textcolor{blue}{skip this step}} if not for VF passthrough)
-\item Unbind the device from \textcolor{red}{original driver} and bind to \textcolor{red}{vfio-pci driver}
+\item Unbind the device from \textcolor{red}{original driver} and register to \textcolor{red}{vfio-pci driver}
 \item Passthrough the vfio-managed device to \textcolor{red}{qemu cmdline} with "\textbf{\textcolor{blue}{vfio-pci,host=$<$bdf$>$}}"
 \end{enumerate}
 \end{block}
@@ -751,7 +751,7 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 \begin{frame}
 \frametitle{Passthrough NVMe via VFIO 1/2}
 \begin{block}{}
-\textit{To unbind \textbf{\textcolor{blue}{01:00.0}} from NVMe driver and bind to vfio-pci driver (VF creation step skipped):} \newline
+\textit{To unbind \textbf{\textcolor{blue}{01:00.0}} from NVMe driver and register to vfio-pci driver (VF creation skipped):} \newline
 {\small \textcolor{red}{\textbf{\textcolor{blue}{01:00.0}} Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03)}}
 
 \vspace{2 mm}
@@ -839,7 +839,7 @@ This is Intel NVMe \textbf{\textcolor{blue}{hardware issue}}:
 \textcolor{red}{02:10.4 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function}
 \end{block}
 \begin{block}{}
-\textit{To unbind VF device from igbvf driver and bind to vfio-pci driver:}
+\textit{To unbind VF device from igbvf driver and register to vfio-pci driver:}
 
 \vspace{2 mm}
 
