@@ -59,8 +59,8 @@
 \item BIOS
 \item IOMMU
 \item NUMA
-\item CPU Hotplug
-\item Memroy Hotplug
+\item CPU/Memory Hotplug
+\item PCI/PCIe Hotplug
 \item PM Suspend
 \end{itemize}
 }
@@ -717,19 +717,59 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 
 %------------------------------------------------
 
-\section{VFIO \& NVMe}
+\section{Debug Non-Emulated Hardware}
 \begin{frame}
-\frametitle{VFIO \& NVMe}
+\frametitle{Debug Non-Emulated Hardware}
+\begin{itemize}
+\item Some features are only available on non-emulated hardware (e.g., NVMe abort cmd)
+\item VFIO allows to passthrough hardware to QEMU/KVM VM
+\item Debug \textbf{\textcolor{blue}{non-emulated hardware}} features without reboot host server!
+\end{itemize}
 \begin{block}{}
-we will pass below.... \newline
-01:00.0 Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03) \newline
+\textit{Steps to enable Intel IOMMU and VFIO on host:}
+\begin{enumerate}
+\item Enable \textcolor{red}{VT-d} in BIOS
+\item Enable \textcolor{red}{INTEL\_IOMMU} in config
+\item Set '\textcolor{red}{intel\_iommu=on}' in grub to enable IOMMU
+\item To modprobe \textcolor{red}{vfio} and \textcolor{red}{vfio-pci driver}
+\end{enumerate}
 
-host\# echo 0000:01:00.0 $>$ /sys/bus/pci/devices/0000$\backslash$:01$\backslash$:00.0/driver/unbind \newline
-host\# lspci -ns 0000:01:00.0 \newline
-01:00.0 0108: 8086:f1a6 (rev 03) \newline
-host\# echo "8086 f1a6" $>$ /sys/bus/pci/drivers/vfio-pci/new\_id
+\vspace{2 mm}
+
+\textit{Steps to passthrough device to QEMU/KVM VM:}
+\begin{enumerate}
+\item Create \textcolor{red}{VF} (Virtual Function) device (\textbf{\textcolor{blue}{skip this step}} if not for VF passthrough)
+\item Unbind the device from \textcolor{red}{original driver} and bind to \textcolor{red}{vfio-pci driver}
+\item Passthrough the vfio-managed device to \textcolor{red}{qemu cmdline} with "\textbf{\textcolor{blue}{vfio-pci,host=$<$bdf$>$}}"
+\end{enumerate}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{Passthrough NVMe via VFIO 1/2}
+\begin{frame}
+\frametitle{Passthrough NVMe via VFIO 1/2}
+\begin{block}{}
+\textit{To unbind \textbf{\textcolor{blue}{01:00.0}} from NVMe driver and bind to vfio-pci driver (VF creation step skipped):} \newline
+{\small \textcolor{red}{\textbf{\textcolor{blue}{01:00.0}} Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03)}}
+
+\vspace{2 mm}
+
+host\# \textcolor{red}{echo 0000:01:00.0 $>$ /sys/bus/pci/devices/0000$\backslash$:01$\backslash$:00.0/driver/unbind} \newline
+host\# \textcolor{red}{lspci -ns 0000:01:00.0} \newline
+{\small 01:00.0 0108: \textbf{\textcolor{olive}{8086:f1a6}} (rev 03)}
+
+\vspace{1 mm}
+
+host\# \textcolor{red}{echo "\textbf{\textcolor{olive}{8086 f1a6}}" $>$ /sys/bus/pci/drivers/vfio-pci/new\_id}
 \end{block}
 \begin{block}{}
+\textit{To passthrough the VFIO-managed NVMe to QEMU/KVM VM:}
+
+\vspace{2 mm}
+
+{\small
 \# qemu-system-x86\_64 -machine accel=kvm -vnc :0 -serial stdio -smp 4 -m 4096M \textbackslash
 
 -net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
@@ -738,7 +778,111 @@ host\# echo "8086 f1a6" $>$ /sys/bus/pci/drivers/vfio-pci/new\_id
 	
 -append "root=/dev/sda1 init=/sbin/init text" \textbackslash
 
--hda /home/user/img/boot.qcow2
+-hda /home/user/img/boot.qcow2 \textbackslash
+}
+
+\textcolor{red}{-device vfio-pci,host=\textbf{\textcolor{blue}{0000:01:00.0}}}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{Passthrough NVMe via VFIO 2/2}
+\begin{frame}
+\frametitle{Passthrough NVMe via VFIO 2/2}
+\begin{block}{}
+There might be QEMU error when NVMe is Intel 760p:
+
+\textcolor{red}{qemu-system-x86\_64: -device vfio-pci,host=0000:01:00.0: vfio 0000:01:00.0:} \textcolor{blue}{failed to add PCI capability 0x11[0x50]@0xb0: table \& pba overlap, or they don't fit in BARs, or don't align} \newline
+
+This is Intel NVMe \textbf{\textcolor{blue}{hardware issue}}:
+\begin{itemize}
+\item The msix table is overlapping with pba table
+\item The workaround is to avoid overlapping by resizing msix table in QEMU
+\item QEMU workaround patch: \textcolor{red}{https://patchwork.kernel.org/patch/10707761}
+\end{itemize}
+\end{block}
+\begin{block}{}
+\small
+\textit{VM lspci for non-emulated NVMe:}
+
+\textcolor{red}{00:04.0 Non-Volatile memory controller: Intel Corporation \textbf{\textcolor{blue}{SSD Pro 7600p/760p/E 6100p Series}}}
+
+\vspace{2 mm}
+
+\textit{VM lspci for QEMU-emulated NVMe:}
+
+\textcolor{red}{00:04.0 Non-Volatile memory controller: Intel Corporation \textbf{\textcolor{blue}{QEMU NVM Express Controller}}}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{Passthrough igbvf via VFIO 1/2}
+\begin{frame}
+\frametitle{Passthrough igbvf via VFIO 1/2}
+\begin{block}{}
+\small
+\textit{The PF (igb) is \textbf{02:00.0}:} \newline
+\textcolor{red}{02:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection}
+
+\vspace{2 mm}
+
+\textit{To create 2 VF (igbvf) for PF (igb) 02:00.0:} \newline
+\textcolor{red}{host\# echo 2 $>$ /sys/module/igb/drivers/pci$\backslash$:igb/0000$\backslash$:02$\backslash$:00.0/\textbf{\textcolor{blue}{iov\_numvfs}}}
+
+\vspace{2 mm}
+
+\textit{2 VF (igbvf) available in addition to the original PF (igb):} \newline
+\textcolor{red}{02:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection} \newline
+\textcolor{red}{\textbf{\textcolor{blue}{02:10.0}} Ethernet controller: Intel Corporation I350 Ethernet Controller \textbf{\textcolor{blue}{Virtual Function}}} \newline
+\textcolor{red}{02:10.4 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function}
+\end{block}
+\begin{block}{}
+\textit{To unbind VF device from igbvf driver and bind to vfio-pci driver:}
+
+\vspace{2 mm}
+
+host\# \textcolor{red}{echo 0000:02:10.0 $>$ /sys/bus/pci/devices/0000$\backslash$:02$\backslash$:10.0/driver/unbind}
+
+\vspace{1 mm}
+
+host\# \textcolor{red}{lspci -ns 0000:02:10.0} \newline
+{\small 02:10.0 0200: \textbf{\textcolor{olive}{8086:1520}} (rev 01)} \newline
+host\# \textcolor{red}{echo "\textbf{\textcolor{olive}{8086 1520}}" $>$ /sys/bus/pci/drivers/vfio-pci/new\_id}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+
+\section{Passthrough igbvf via VFIO 2/2}
+\begin{frame}
+\frametitle{Passthrough igbvf via VFIO 2/2}
+\begin{itemize}
+\item Both PF and VF can passthrough via VFIO
+\item Any PCI hardware (e.g., USB controller) can passthrough via VFIO
+\end{itemize}
+\begin{block}{}
+\textit{To passthrough the VFIO-managed VF (igbvf) to QEMU/KVM VM:}
+
+\vspace{2 mm}
+
+\# qemu-system-x86\_64 -machine accel=kvm -vnc :0 -serial stdio -smp 4 -m 4096M \textbackslash
+
+-net nic -net user,hostfwd=tcp::5022-:22 \textbackslash
+
+-kernel /home/user/linux/arch/x86\_64/boot/bzImage \textbackslash
+	
+-append "root=/dev/sda1 init=/sbin/init text" \textbackslash
+
+-hda /home/user/img/boot.qcow2 \textbackslash
+
+\textcolor{red}{-device vfio-pci,host=\textbf{\textcolor{blue}{0000:02:10.0}}}
+\end{block}
+\begin{block}{}
+The device in VM lspci is VF (igbvf):
+
+\textcolor{red}{00:04.0 Ethernet controller: Intel Corporation I350 Ethernet Controller \textbf{\textcolor{blue}{Virtual Function}}}
 \end{block}
 \end{frame}
 
@@ -1656,6 +1800,7 @@ To hotplug PCI device (virtio-scsi as example)
 \item NUMA (CPU, Memory and PCI/PCIe)
 \item Hotplug (CPU, Memory and PCI/PCIe)
 \item BIOS (seabios), IOMMU (intel), PM Suspend
+\item Non-emulated Hardware Features via VFIO
 \end{itemize}
 \end{frame}
 
