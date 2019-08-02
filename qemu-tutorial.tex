@@ -751,7 +751,7 @@ vm\# ethtool -i enp0s3 $|$ grep driver \newline
 \begin{frame}
 \frametitle{Passthrough NVMe via VFIO 1/2}
 \begin{block}{}
-\textit{To unbind \textbf{\textcolor{blue}{01:00.0}} from NVMe driver and register to vfio-pci driver (VF creation skipped):} \newline
+\textit{\underline{\textbf{\textcolor{red}{STEP 1}}}: To unbind \textbf{\textcolor{blue}{01:00.0}} from NVMe driver and register to vfio-pci driver:} \newline
 {\small \textcolor{red}{\textbf{\textcolor{blue}{01:00.0}} Non-Volatile memory controller: Intel Corporation Device f1a6 (rev 03)}}
 
 \vspace{2 mm}
@@ -765,7 +765,7 @@ host\# \textcolor{red}{lspci -ns 0000:01:00.0} \newline
 host\# \textcolor{red}{echo "\textbf{\textcolor{olive}{8086 f1a6}}" $>$ /sys/bus/pci/drivers/vfio-pci/new\_id}
 \end{block}
 \begin{block}{}
-\textit{To passthrough the VFIO-managed NVMe to QEMU/KVM VM:}
+\textit{\underline{\textbf{\textcolor{red}{STEP 2}}}: To passthrough the VFIO-managed NVMe to QEMU/KVM VM:}
 
 \vspace{2 mm}
 
@@ -793,7 +793,7 @@ host\# \textcolor{red}{echo "\textbf{\textcolor{olive}{8086 f1a6}}" $>$ /sys/bus
 \begin{block}{}
 There might be QEMU error when NVMe is Intel 760p:
 
-\textcolor{red}{qemu-system-x86\_64: -device vfio-pci,host=0000:01:00.0: vfio 0000:01:00.0:} \textcolor{blue}{failed to add PCI capability 0x11[0x50]@0xb0: table \& pba overlap, or they don't fit in BARs, or don't align} \newline
+{\small \textcolor{red}{qemu-system-x86\_64: -device vfio-pci,host=0000:01:00.0: vfio 0000:01:00.0:} \textcolor{blue}{failed to add PCI capability 0x11[0x50]@0xb0: table \& pba overlap, or they don't fit in BARs, or don't align}} \newline
 
 This is Intel NVMe \textbf{\textcolor{blue}{hardware issue}}:
 \begin{itemize}
@@ -821,15 +821,14 @@ This is Intel NVMe \textbf{\textcolor{blue}{hardware issue}}:
 \section{Passthrough igbvf via VFIO 1/2}
 \begin{frame}
 \frametitle{Passthrough igbvf via VFIO 1/2}
+{\small
+\textit{The PF (igb) is \textbf{02:00.0}:} \newline
+02:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection
+}
 \begin{block}{}
 \small
-\textit{The PF (igb) is \textbf{02:00.0}:} \newline
-\textcolor{red}{02:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection}
-
-\vspace{2 mm}
-
-\textit{To create 2 VF (igbvf) for PF (igb) 02:00.0:} \newline
-\textcolor{red}{host\# echo 2 $>$ /sys/module/igb/drivers/pci$\backslash$:igb/0000$\backslash$:02$\backslash$:00.0/\textbf{\textcolor{blue}{iov\_numvfs}}}
+\textit{\underline{\textbf{\textcolor{red}{STEP 1}}}: To create 2 VF (igbvf) for PF (igb) 02:00.0:} \newline
+host\# \textcolor{red}{echo 2 $>$ /sys/module/igb/drivers/pci$\backslash$:igb/0000$\backslash$:02$\backslash$:00.0/\textbf{\textcolor{blue}{iov\_numvfs}}}
 
 \vspace{2 mm}
 
@@ -839,11 +838,11 @@ This is Intel NVMe \textbf{\textcolor{blue}{hardware issue}}:
 \textcolor{red}{02:10.4 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function}
 \end{block}
 \begin{block}{}
-\textit{To unbind VF device from igbvf driver and register to vfio-pci driver:}
+\textit{\underline{\textbf{\textcolor{red}{STEP 2}}}: To unbind VF device from igbvf driver and register to vfio-pci driver:}
 
 \vspace{2 mm}
 
-host\# \textcolor{red}{echo 0000:02:10.0 $>$ /sys/bus/pci/devices/0000$\backslash$:02$\backslash$:10.0/driver/unbind}
+host\# \textcolor{red}{echo \textbf{\textcolor{blue}{0000:02:10.0}} $>$ /sys/bus/pci/devices/0000$\backslash$:02$\backslash$:10.0/driver/unbind}
 
 \vspace{1 mm}
 
@@ -863,7 +862,7 @@ host\# \textcolor{red}{echo "\textbf{\textcolor{olive}{8086 1520}}" $>$ /sys/bus
 \item Any PCI hardware (e.g., USB controller) can passthrough via VFIO
 \end{itemize}
 \begin{block}{}
-\textit{To passthrough the VFIO-managed VF (igbvf) to QEMU/KVM VM:}
+\textit{\underline{\textbf{\textcolor{red}{STEP 3}}}: To passthrough the VFIO-managed VF (igbvf) to QEMU/KVM VM:}
 
 \vspace{2 mm}
 
